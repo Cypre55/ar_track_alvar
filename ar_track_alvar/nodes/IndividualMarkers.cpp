@@ -43,10 +43,16 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <sensor_msgs/image_encodings.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <pcl_conversions/pcl_conversions.h>
 #include <dynamic_reconfigure/server.h>
 #include <ar_track_alvar/ParamsConfig.h>
 #include <Eigen/StdVector>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+
 
 namespace gm = geometry_msgs;
 namespace ata = ar_track_alvar;
@@ -64,6 +70,7 @@ cv_bridge::CvImagePtr cv_ptr_;
 image_transport::Subscriber cam_sub_;
 ros::Subscriber cloud_sub_;
 ros::Publisher arMarkerPub_;
+image_transport::Publisher pub_annotated;
 ros::Publisher rvizMarkerPub_;
 ros::Publisher rvizMarkerPub2_;
 ar_track_alvar_msgs::AlvarMarkers arPoseMarkers_;
@@ -78,6 +85,7 @@ bool output_frame_from_msg;
 double max_frequency;
 double marker_size;
 double max_new_marker_error;
+
 double max_track_error;
 std::string cam_image_topic;
 std::string cam_info_topic;
@@ -315,7 +323,17 @@ void GetMarkerPoses(cv::Mat& image, ARCloud& cloud)
       m->ros_corners_3D[1] = cloud(pt2.x, pt2.y);
       m->ros_corners_3D[2] = cloud(pt3.x, pt3.y);
       m->ros_corners_3D[3] = cloud(pt4.x, pt4.y);
-
+      // cv::circle(image,cv::Point(pt1.x,pt1.y),3,cv::Scalar(255,255,0),-1);
+      // cv::circle(image,cv::Point(pt2.x,pt2.y),3,cv::Scalar(255,0,255),-1);
+      // cv::circle(image,cv::Point(pt3.x,pt3.y),3,cv::Scalar(255,0,0),-1);
+      // cv::circle(image,cv::Point(pt4.x,pt4.y),3,cv::Scalar(0,255,0),-1);
+      cv::rectangle(image,cv::Point(pt1.x,pt1.y),cv::Point(pt3.x,pt3.y), cv::Scalar(0, 0, 255),2);
+      sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
+      // cv::imshow("image",image);
+      // cv::waitKey(100);
+      // std::cout<<"imshow called"<<std::endl;
+      pub_annotated.publish(msg);
+      // std::cout<<"published"<<std::endl;
       if (ori >= 0 && ori < 4)
       {
         if (ori != 0)
@@ -403,10 +421,10 @@ void getPointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
         double px = p.translation[0] / 100.0;
         double py = p.translation[1] / 100.0;
         double pz = p.translation[2] / 100.0;
-        double qx = p.quaternion[1];
-        double qy = p.quaternion[2];
-        double qz = p.quaternion[3];
-        double qw = p.quaternion[0];
+        double qx = 1;
+        double qy = 0;
+        double qz = 0;
+        double qw = 0;
 
         tf::Quaternion rotation(qx, qy, qz, qw);
         tf::Vector3 origin(px, py, pz);
@@ -605,7 +623,9 @@ int main(int argc, char* argv[])
       n.advertise<visualization_msgs::Marker>("visualization_marker", 0);
   rvizMarkerPub2_ =
       n.advertise<visualization_msgs::Marker>("ARmarker_points", 0);
-
+ 
+  image_transport::ImageTransport it(n);
+  pub_annotated = it.advertise("/red/tag_image_annotated", 10);
   // Prepare dynamic reconfiguration
   dynamic_reconfigure::Server<ar_track_alvar::ParamsConfig> server;
   dynamic_reconfigure::Server<ar_track_alvar::ParamsConfig>::CallbackType f;
