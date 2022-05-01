@@ -92,6 +92,7 @@ std::string cam_info_topic;
 std::string output_frame;
 int marker_resolution = 5;  // default marker resolution
 int marker_margin = 2;      // default marker margin
+float area_check = 10;
 
 // Debugging utility function
 void draw3dPoints(ARCloud::Ptr cloud, string frame, int color, int id,
@@ -323,6 +324,8 @@ void GetMarkerPoses(cv::Mat& image, ARCloud& cloud)
       m->ros_corners_3D[1] = cloud(pt2.x, pt2.y);
       m->ros_corners_3D[2] = cloud(pt3.x, pt3.y);
       m->ros_corners_3D[3] = cloud(pt4.x, pt4.y);
+      area_check = (pt1.x-pt3.x)*(pt1.x-pt3.x) + (pt1.y-pt3.y)*(pt1.y-pt3.y);
+      // std::cout<<"area_check: "<<area_check<<std::endl;
       // cv::circle(image,cv::Point(pt1.x,pt1.y),3,cv::Scalar(255,255,0),-1);
       // cv::circle(image,cv::Point(pt2.x,pt2.y),3,cv::Scalar(255,0,255),-1);
       // cv::circle(image,cv::Point(pt3.x,pt3.y),3,cv::Scalar(255,0,0),-1);
@@ -510,8 +513,13 @@ void getPointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
         ar_pose_marker.id = id;
         arPoseMarkers_.markers.push_back(ar_pose_marker);
       }
+      if(area_check>58){
       arPoseMarkers_.header.stamp = image_msg->header.stamp;
       arMarkerPub_.publish(arPoseMarkers_);
+      std::cout<<area_check<<std::endl;
+      }else{
+        std::cout<<"NOT DETECTED: "<<area_check<<std::endl;
+      }
     }
     catch (cv_bridge::Exception& e)
     {
