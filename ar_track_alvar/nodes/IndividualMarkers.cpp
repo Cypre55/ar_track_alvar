@@ -70,7 +70,7 @@ cv_bridge::CvImagePtr cv_ptr_;
 image_transport::Subscriber cam_sub_;
 ros::Subscriber cloud_sub_;
 ros::Publisher arMarkerPub_;
-image_transport::Publisher pub_annotated;
+image_transport::Publisher remap_pub_annotated;
 ros::Publisher rvizMarkerPub_;
 ros::Publisher rvizMarkerPub2_;
 ar_track_alvar_msgs::AlvarMarkers arPoseMarkers_;
@@ -335,7 +335,7 @@ void GetMarkerPoses(cv::Mat& image, ARCloud& cloud)
       // cv::imshow("image",image);
       // cv::waitKey(100);
       // std::cout<<"imshow called"<<std::endl;
-      pub_annotated.publish(msg);
+      remap_pub_annotated.publish(msg);
       // std::cout<<"published"<<std::endl;
       if (ori >= 0 && ori < 4)
       {
@@ -634,7 +634,7 @@ int main(int argc, char* argv[])
       n.advertise<visualization_msgs::Marker>("ARmarker_points", 0);
  
   image_transport::ImageTransport it(n);
-  pub_annotated = it.advertise("/red/tag_image_annotated", 10);
+  remap_pub_annotated = it.advertise("/remap_tag_image_annotated", 10);
   // Prepare dynamic reconfiguration
   dynamic_reconfigure::Server<ar_track_alvar::ParamsConfig> server;
   dynamic_reconfigure::Server<ar_track_alvar::ParamsConfig>::CallbackType f;
