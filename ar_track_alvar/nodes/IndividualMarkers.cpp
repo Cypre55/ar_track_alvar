@@ -516,10 +516,10 @@ void getPointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
       if(area_check>58){
       arPoseMarkers_.header.stamp = image_msg->header.stamp;
       arMarkerPub_.publish(arPoseMarkers_);
-      std::cout<<area_check<<std::endl;
-      }else{
-        std::cout<<"NOT DETECTED: "<<area_check<<std::endl;
-      }
+      // std::cout<<area_check<<std::endl;
+      // }else{
+      //   std::cout<<"NOT DETECTED: "<<area_check<<std::endl;
+      // }
     }
     catch (cv_bridge::Exception& e)
     {
